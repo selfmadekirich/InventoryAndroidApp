@@ -33,7 +33,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
@@ -45,6 +49,7 @@ import com.example.inventory.InventoryTopAppBar
 import com.example.inventory.R
 import com.example.inventory.ui.AppViewModelProvider
 import com.example.inventory.ui.navigation.NavigationDestination
+import com.example.inventory.ui.settings.SettingsViewModel
 import com.example.inventory.ui.theme.InventoryTheme
 import kotlinx.coroutines.launch
 import java.util.Currency
@@ -134,6 +139,9 @@ fun ItemInputForm(
     validSupplierEmail: Boolean = true,
     validSupplierPhone: Boolean = true
 ) {
+    val settings = SettingsViewModel()
+
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
@@ -166,9 +174,15 @@ fun ItemInputForm(
             enabled = enabled,
             singleLine = true
         )
+
+        var flagDefaultQuantity by remember { mutableStateOf(settings.getSettingValue("use_default_quantity")) }
+        val defQuantity = settings.defaultQuantity ?: ""
+        val displayQuantity = if (flagDefaultQuantity) defQuantity else itemDetails.quantity
         OutlinedTextField(
             value = itemDetails.quantity,
-            onValueChange = { onValueChange(itemDetails.copy(quantity = it)) },
+            onValueChange = {
+                flagDefaultQuantity = false
+                onValueChange(itemDetails.copy(quantity = it)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             label = { Text(stringResource(R.string.quantity_req)) },
             colors = OutlinedTextFieldDefaults.colors(

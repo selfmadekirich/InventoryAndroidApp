@@ -63,6 +63,7 @@ import com.example.inventory.ui.theme.InventoryTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import com.example.inventory.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
 
 object ItemDetailsDestination : NavigationDestination {
@@ -142,10 +143,14 @@ private fun ItemDetailsBody(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
     ) {
         var deleteConfirmationRequired by rememberSaveable { mutableStateOf(false) }
+        val settings = SettingsViewModel()
+        val flagSensitiveData = settings.getSettingValue("sensitive_data_visible")
+        val flagProhibitSendingData = settings.getSettingValue("share_is_active")
 
         ItemDetails(
             item = itemDetailsUiState.itemDetails.toItem(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            sensitive_data_visible = flagSensitiveData
         )
         Button(
             onClick = onSellItem,
@@ -159,14 +164,14 @@ private fun ItemDetailsBody(
             onClick = { context.startActivity(shareIntent) },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,
-            enabled = true
+            enabled = !flagProhibitSendingData
         ) {
             Text(stringResource(R.string.share))
         }
         OutlinedButton(
             onClick = { deleteConfirmationRequired = true },
             shape = MaterialTheme.shapes.small,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.delete))
         }
@@ -185,7 +190,8 @@ private fun ItemDetailsBody(
 
 @Composable
 fun ItemDetails(
-    item: Item, modifier: Modifier = Modifier
+    item: Item, modifier: Modifier = Modifier,
+    sensitive_data_visible: Boolean
 ) {
     Card(
         modifier = modifier,
@@ -225,21 +231,30 @@ fun ItemDetails(
             )
             ItemDetailsRow(
                 labelResID = R.string.supplier,
-                itemDetail = item.supplier,
+                itemDetail = if (sensitive_data_visible)
+                    "*".repeat(8)
+                else
+                    item.supplier,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(id = R.dimen.padding_medium)
                 )
             )
             ItemDetailsRow(
                 labelResID = R.string.supplierEmail,
-                itemDetail = item.supplierEmail,
+                itemDetail = if (sensitive_data_visible)
+                    "*".repeat(8)
+                else
+                    item.supplierEmail,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(id = R.dimen.padding_medium)
                 )
             )
             ItemDetailsRow(
                 labelResID = R.string.supplierPhone,
-                itemDetail = item.supplierPhone,
+                itemDetail = if (sensitive_data_visible)
+                    "*".repeat(8)
+                else
+                    item.supplierPhone,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(id = R.dimen.padding_medium)
                 )
