@@ -16,6 +16,9 @@
 
 package com.example.inventory.ui.item
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -50,6 +53,7 @@ import com.example.inventory.R
 import com.example.inventory.ui.AppViewModelProvider
 import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.settings.SettingsViewModel
+import com.example.inventory.ui.settings.context
 import com.example.inventory.ui.theme.InventoryTheme
 import kotlinx.coroutines.launch
 import java.util.Currency
@@ -60,6 +64,7 @@ object ItemEntryDestination : NavigationDestination {
     override val titleRes = R.string.item_entry_title
 }
 
+var addItemPage : Boolean = false
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemEntryScreen(
@@ -69,6 +74,16 @@ fun ItemEntryScreen(
     viewModel: ItemEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val coroutineScope = rememberCoroutineScope()
+
+    addItemPage = true
+    val loadFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                viewModel.loadFromFile(context, uri)
+                navigateBack()
+            }
+        }
+    }
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -76,7 +91,7 @@ fun ItemEntryScreen(
                 canNavigateBack = canNavigateBack,
                 navigateUp = onNavigateUp
             )
-        }
+        },
     ) { innerPadding ->
         ItemEntryBody(
             itemUiState = viewModel.itemUiState,
@@ -86,6 +101,9 @@ fun ItemEntryScreen(
                     viewModel.saveItem()
                     navigateBack()
                 }
+            },
+            onLoadFromFileClick = {
+                loadFileLauncher.launch(arrayOf("application/octet-stream"))
             },
             modifier = Modifier
                 .padding(
@@ -104,6 +122,7 @@ fun ItemEntryBody(
     itemUiState: ItemUiState,
     onItemValueChange: (ItemDetails) -> Unit,
     onSaveClick: () -> Unit,
+    onLoadFromFileClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -125,6 +144,16 @@ fun ItemEntryBody(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = stringResource(R.string.save_action))
+        }
+        if(addItemPage){
+            Button(
+                //onClick = { loadFileLauncher.launch(arrayOf("application/octet-stream")) },
+                onClick = onLoadFromFileClick,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = stringResource(R.string.load_from_file))
+            }
         }
     }
 }
@@ -255,6 +284,6 @@ private fun ItemEntryScreenPreview() {
                 supplier = "Default", supplierEmail = "vasya.pupkin@mail.ru",
                 supplierPhone = "8-800-555-35-35"
             )
-        ), onItemValueChange = {}, onSaveClick = {})
+        ), onItemValueChange = {}, onSaveClick = {}, onLoadFromFileClick = {})
     }
 }

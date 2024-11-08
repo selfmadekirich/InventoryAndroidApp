@@ -16,13 +16,22 @@
 
 package com.example.inventory.ui.item
 
+import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.inventory.data.DataSource
 import com.example.inventory.data.Item
 import java.text.NumberFormat
 import com.example.inventory.data.ItemsRepository
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.first
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import javax.crypto.spec.IvParameterSpec
 
 
 /**
@@ -63,6 +72,42 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
         }
     }
 
+    private fun getSecretKey(uri: Uri): SecretKey {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        //val keyStore = KeyStore.getInstance("AES")
+        val secretKey = keyStore.getKey("my_secret_key_$uri", null) as SecretKey
+        return secretKey
+    }
+
+    private fun decryptData(encryptedData: ByteArray, secretKey: SecretKey): ByteArray {
+        val iv = ByteArray(16)
+        System.arraycopy(encryptedData, 0, iv, 0, iv.size)
+        val cipherText = ByteArray(encryptedData.size - iv.size)
+        System.arraycopy(encryptedData, iv.size, cipherText, 0, cipherText.size)
+        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(iv))
+        return cipher.doFinal(cipherText)
+    }
+
+    suspend fun loadFromFile(context: Context, uri: Uri) {
+        try {
+            val encryptedData = context.contentResolver.openInputStream(uri)?.readBytes() ?: throw Exception("Не удалось прочитать файл.")
+            val secretKey = getSecretKey(uri) // Получение секретного ключа
+            val decryptedData = decryptData(encryptedData, secretKey) // Расшифровка данных
+            val json = String(decryptedData, Charsets.UTF_8)
+            var itemDetails = Gson().fromJson(json, ItemDetails::class.java)
+            itemDetails.dataSource = DataSource.FILE
+            val it = itemsRepository.getAllItemsStream().first()
+            val max = it.maxBy { v -> v.id }
+            itemDetails.id = max.id + 1
+            updateUiState(itemDetails)
+            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
+        } catch (e: Exception) {
+            e.printStackTrace()
+
+        }
+    }
+
     private fun validateSupplierPhone(uiState: ItemDetails = itemUiState.itemDetails): Boolean{
         return with(uiState){
             supplierPhone.isNotBlank() && android.util.Patterns.PHONE.matcher(supplierPhone).matches()
@@ -94,13 +139,14 @@ data class ItemUiState(
 )
 
 data class ItemDetails(
-    val id: Int = 0,
+    var id: Int = 0,
     val name: String = "",
     val price: String = "",
     val quantity: String = "",
     val supplier: String = "",
     val supplierEmail: String = "",
-    val supplierPhone: String = ""
+    val supplierPhone: String = "",
+    var dataSource: DataSource = DataSource.MANUAL
 )
 
 /**
@@ -115,7 +161,8 @@ fun ItemDetails.toItem(): Item = Item(
     quantity = quantity.toIntOrNull() ?: 0,
     supplier = supplier,
     supplierEmail = supplierEmail,
-    supplierPhone = supplierPhone
+    supplierPhone = supplierPhone,
+    dataSource = dataSource
 )
 
 fun Item.formatedPrice(): String {
@@ -143,5 +190,6 @@ fun Item.toItemDetails(): ItemDetails = ItemDetails(
     quantity = quantity.toString(),
     supplier = supplier,
     supplierEmail = supplierEmail,
-    supplierPhone = supplierPhone
+    supplierPhone = supplierPhone,
+    dataSource = dataSource
 )

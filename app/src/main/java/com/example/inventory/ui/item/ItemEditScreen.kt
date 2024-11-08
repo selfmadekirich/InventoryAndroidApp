@@ -44,6 +44,7 @@ object ItemEditDestination : NavigationDestination {
     val routeWithArgs = "$route/{$itemIdArg}"
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemEditScreen(
@@ -53,6 +54,7 @@ fun ItemEditScreen(
     viewModel: ItemEditViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val coroutineScope = rememberCoroutineScope()
+    addItemPage = false
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -70,6 +72,7 @@ fun ItemEditScreen(
                 viewModel.updateItem()
                 navigateBack()
             } },
+            onLoadFromFileClick = {},
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
