@@ -179,7 +179,7 @@ fun ItemInputForm(
         val defQuantity = settings.defaultQuantity ?: ""
         val displayQuantity = if (flagDefaultQuantity) defQuantity else itemDetails.quantity
         OutlinedTextField(
-            value = itemDetails.quantity,
+            value = displayQuantity,
             onValueChange = {
                 flagDefaultQuantity = false
                 onValueChange(itemDetails.copy(quantity = it)) },
