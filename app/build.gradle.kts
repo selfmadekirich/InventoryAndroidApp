@@ -79,6 +79,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.5")
 
     implementation("androidx.security:security-crypto:1.1.0-alpha03")
+    implementation("com.google.code.gson:gson:2.8.8")
 
     //Room
     implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")

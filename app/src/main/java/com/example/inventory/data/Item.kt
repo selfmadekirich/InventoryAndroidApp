@@ -30,5 +30,11 @@ data class Item(
     val quantity: Int,
     val supplier: String,
     val supplierEmail: String,
-    val supplierPhone: String
+    val supplierPhone: String,
+    val dataSource :DataSource = DataSource.MANUAL
 )
+
+enum class DataSource{
+    MANUAL,
+    FILE
+}

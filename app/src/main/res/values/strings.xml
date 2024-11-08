@@ -40,4 +40,6 @@
     <string name="share">Share</string>
     <string name="yes">Yes</string>
     <string name="required_fields">*required fields</string>
+    <string name="save_to_file">Save to encrypted file</string>
+    <string name="datasource">Data Source:</string>
 </resources>

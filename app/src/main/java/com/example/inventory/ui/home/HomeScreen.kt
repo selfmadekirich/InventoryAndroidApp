@@ -240,6 +240,11 @@ private fun InventoryItem(
                 text = item.formatedPrice(),
                 style = MaterialTheme.typography.titleLarge
             )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = item.dataSource.toString(),
+                style = MaterialTheme.typography.titleLarge
+            )
         }
     }
 }

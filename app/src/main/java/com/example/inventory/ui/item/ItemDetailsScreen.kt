@@ -65,6 +65,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventory.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.inventory.ui.settings.context
 
 object ItemDetailsDestination : NavigationDestination {
     override val route = "item_details"
@@ -105,12 +109,21 @@ fun ItemDetailsScreen(
 
         }, modifier = modifier
     ) { innerPadding ->
+        val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument()) { uri: Uri? ->
+            uri?.let {
+
+                val cacheFile = viewModel.saveFileToCache(context, uiState.value.itemDetails.toItem(), uri)
+                viewModel.dumpCacheToSharedStorage(context, cacheFile, uri)
+
+            }
+        }
         ItemDetailsBody(
             itemDetailsUiState = uiState.value,
             onSellItem = { viewModel.reduceQuantityByOne() },
             onDelete = { coroutineScope.launch {
                 viewModel.deleteItem()
                 navigateBack()}},
+            onSaveToFile = {saveFileLauncher.launch("item")},
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
@@ -127,6 +140,7 @@ private fun ItemDetailsBody(
     itemDetailsUiState: ItemDetailsUiState,
     onSellItem: () -> Unit,
     onDelete: () -> Unit,
+    onSaveToFile:() -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -174,6 +188,13 @@ private fun ItemDetailsBody(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.delete))
+        }
+        Button(
+            onClick = onSaveToFile,
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.save_to_file))
         }
         if (deleteConfirmationRequired) {
             DeleteConfirmationDialog(
@@ -259,6 +280,13 @@ fun ItemDetails(
                     horizontal = dimensionResource(id = R.dimen.padding_medium)
                 )
             )
+            ItemDetailsRow(
+                labelResID = R.string.datasource,
+                itemDetail = item.dataSource.toString(),
+                modifier = Modifier.padding(
+                    horizontal = dimensionResource(id = R.dimen.padding_medium)
+                )
+            )
         }
     }
 }
@@ -306,7 +334,8 @@ fun ItemDetailsScreenPreview() {
                 itemDetails = ItemDetails(1, "Pen", "$100", "10", supplier = "Default", supplierPhone = "Phone", supplierEmail = "Email")
             ),
             onSellItem = {},
-            onDelete = {}
+            onDelete = {},
+            onSaveToFile = {}
         )
     }
 }

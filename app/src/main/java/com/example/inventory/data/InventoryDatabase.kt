@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import android.content.Context
 import androidx.room.Room
 
-@Database(entities = [Item::class], version = 2, exportSchema = false)
+@Database(entities = [Item::class], version = 3, exportSchema = false)
 abstract class InventoryDatabase : RoomDatabase() {
     companion object {
         @Volatile
